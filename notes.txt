@@ -1,0 +1,49 @@
+Initial Packet:
+
+00 00 a5 1c 05 00 00 08 29 1c 05 00 00 20 41
+
+
+Transmitter Reset:
+
+72 18 c0 98 22 e1 00 76 ad 75 00 00 3c 2a 42 89 93 33 44 0b 00 08 53 53 71
+72 18 c0 98 22 e1 00 76 ad 75 00 00 3c 2a 42 91 ac cc 44 0b 00 08 4d 4d 1f
+72 18 c0 98 22 e1 00 76 ad 75 00 00 3c 2a 42 91 39 9a 44 0b 00 08 4e 4e 7c
+72 18 c0 98 22 e1 00 76 ad 75 00 00 3c 2a 42 91 73 33 44 0b 00 08 4f 4f 51
+72 18 c0 98 22 e1 00 76 ad 75 00 00 3c 2a 42 91 ac cc 44 0b 00 08 4e 48 1b
+
+
+Transmitter Timed Transmit:
+
+72 12 b2 ee b3 a7 00 76 ad 75 00 00 3e 2d 00 10 21 21 d3
+72 12 b2 ee b3 a7 00 76 ad 75 00 00 3e 2d 00 10 22 22 d5
+NOTE: These are not from the test temp sensor on desk.
+
+
+Packet Layout for Temp Sensor
+
+       |--- Metadata -------------|  |--- Payload --------------|
+72 18 c0 98 22 e1 00 76 ad 75 00 00 3c 2a 42 89 93 33 44 0b 00 08 53 53 71
+ |  |  |--------|  |--------|  |  |  |  |  |--------|  |--------|  |  |  |_ Checksum
+ |  |           |           |  |  |  |  |           |           |  |  |_Signal?
+ |  |           |           |  |  |  |  |           |           |  |_ Signal?
+ |  |           |           |  |  |  |  |           |           |_ External Temp Data (IEEE-754)
+ |  |           |           |  |  |  |  |           |_ Internal Temp Data (IEEE-754)
+ |  |           |           |  |  |  |  |_ PTI?
+ |  |           |           |  |  |  |_ Message Class Byte
+ |  |           |           |  |  |_ Hop Count
+ |  |           |           |  |_ Trace Count
+ |  |           |           |_ First Hop TXID
+ |  |           |_ Originator TXID
+ |  |_ Length Byte
+ |_ Header Byte
+
+
+Checksum Calc:
+
+  72  18   c0   98  22   e1 00   76   ad   75 00 00  3c  2a  42   91   ac   cc  44  0b 00 08  4d  4d  1f
+[114, 24, 192, 152, 34, 225, 0, 118, 173, 117, 0, 0, 60, 42, 66, 145, 172, 204, 68, 11, 0, 8, 77, 77, 31]
+
+# For all the bytes in the packet (except the checksum byte):
+for i in range(tmp_length):
+    # Add each of the bytes and modulo 256 (basically mask any high bits away).
+    tmp_checksum = (tmp_checksum + tmp_buffer[i]) % 256

@@ -8,3 +8,5 @@ from .echomessage import EchoMessage
 ### FUNCTIONS ###
 
 ### CLASSES ###
+class EchoEncoder:
+    pass

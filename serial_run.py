@@ -9,6 +9,8 @@ import signal
 import threading
 import time
 
+from hasts.protocols.echoserial import EchoMessage
+
 ### GLOBALS ###
 COM_PORT = "COM5"
 COM_BAUD = 9600
@@ -145,7 +147,13 @@ class MessageDecoder(threading.Thread):
     def run(self):
         self.logger.debug("Starting the MessageDecoder thread.")
         while not self._shutdown:
-            time.sleep(1)
+            # Get a byte from the queue
+            try:
+                tmp_msg = EchoMessage()
+                tmp_msg.bytes = self._input.get(timeout = 1)
+                self._output.put(tmp_msg)
+            except queue.Empty:
+                pass  # NOTE: This is a poor way to do this, but this is quick.
         self.logger.debug("Ending the MessageDecoder thread.")
 
     def stop(self):
@@ -164,7 +172,14 @@ class MessagePrinter(threading.Thread):
         while not self._shutdown:
             try:
                 tmp_msg = self._input.get(timeout = 1)
-                self.logger.info("Message: %s", tmp_msg)
+                # FIXME: This will be made into a proper "summary" printer method
+                self.logger.info("--- Message: %s ---", tmp_msg)
+                self.logger.info("    Header: %s", tmp_msg._header)
+                self.logger.info("    Metadata:")
+                self.logger.info("        Originator TXID: %s", tmp_msg._metadata._originator)
+                self.logger.info("        First Hop TXID: %s", tmp_msg._metadata._first_hop)
+                self.logger.info("        Trace List: %s", tmp_msg._metadata._trace_list)
+                self.logger.info("        Hop Count: %s", tmp_msg._metadata._hop_count)
             except queue.Empty:
                 pass # NOTE: This is a poor way to do this, but this is quick.
         self.logger.debug("Ending the MessagePrinter thread.")
